@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import monoImg from './assets/mono.jpg'
+import gatoImg from './assets/images.jpeg'
 import './App.css'
 
 function App() {
@@ -9,10 +9,10 @@ function App() {
     <>
       <section id="center">
         <div className="hero">
-          <img src={monoImg} className="base1" width="170" height="179" alt="" />
+          <img src={gatoImg} className="base2" width="170" height="179" alt="" />
         </div>
         <div>
-          <h1>holisss amigos</h1>
+          <h1>LA calabaza</h1>
           <p>
             Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
           </p>
