@@ -12,7 +12,7 @@ function App() {
           <img src={gatoImg} className="base2" width="170" height="179" alt="" />
         </div>
         <div>
-          <h1>LA calabaza</h1>
+          <h1>HALLOOWEN</h1>
           <p>
             Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
           </p>
