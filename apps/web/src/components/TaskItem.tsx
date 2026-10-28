@@ -1,56 +1,47 @@
-import { deleteTask, toggleTask } from "@/lib/actions";
-import type { Task } from "@/lib/types";
-import { SubmitButton } from "./SubmitButton";
+'use client';
+
+import React from 'react';
+import { Task } from '../lib/types';
 
 interface TaskItemProps {
   task: Task;
-  onToggleStatus: (id: string, status: boolean) => void;
+  onToggleStatus: (id: string, currentStatus: boolean) => void;
+  onDelete: (id: string) => void;
 }
 
-export function TaskItem({ task, onToggleStatus }: TaskItemProps) {
-  const toggleAction = toggleTask.bind(null, task.id, !task.done);
-  const deleteAction = deleteTask.bind(null, task.id);
+export const TaskItem: React.FC<TaskItemProps> = ({ task, onToggleStatus, onDelete }) => {
+  const isDone = Boolean(task.done ?? (task as any).isCompleted);
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3 bg-[#222] text-white rounded-md my-2">
-      {/* Botón circular / checkbox de estado */}
-      <form action={toggleAction}>
-        <SubmitButton
-          label={task.done ? "Marcar como pendiente" : "Marcar como hecha"}
-          className={`size-5 rounded-full border-2 grid place-items-center text-[10px] cursor-pointer ${
-            task.done ? "bg-accent border-accent text-accent-foreground" : "border-border"
+    <div className="flex items-center justify-between p-3 my-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors">
+      {/* Selector circular y título */}
+      <button
+        type="button"
+        onClick={() => onToggleStatus(task.id, isDone)}
+        className="flex items-center gap-3 text-left flex-1 cursor-pointer bg-transparent border-none text-white"
+      >
+        <span
+          className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
+            isDone
+              ? 'bg-emerald-500 border-emerald-500 text-black text-xs font-bold'
+              : 'border-zinc-600 hover:border-zinc-400'
           }`}
         >
-          {task.done ? "✓" : ""}
-        </SubmitButton>
-      </form>
+          {isDone ? '✓' : ''}
+        </span>
+        <span className={`text-sm ${isDone ? 'line-through text-zinc-500' : 'text-zinc-200'}`}>
+          {task.title}
+        </span>
+      </button>
 
-      {/* Título de la tarea */}
-      <span className={`flex-1 ${task.done ? "line-through text-muted opacity-60" : ""}`}>
-        {task.title}
-      </span>
-
-      {/* Botón textual de estado (Completar / Deshacer) */}
-      <form action={toggleAction}>
-        <SubmitButton
-          label={task.done ? "Deshacer tarea" : "Completar tarea"}
-          className={`px-3 py-1 text-sm rounded text-white font-medium transition-colors ${
-            task.done ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {task.done ? "Deshacer" : "Completar"}
-        </SubmitButton>
-      </form>
-
-      {/* Botón de eliminación */}
-      <form action={deleteAction}>
-        <SubmitButton
-          label="Eliminar tarea"
-          className="text-sm text-muted hover:text-red-500 transition-colors ml-2"
-        >
-          Eliminar
-        </SubmitButton>
-      </form>
-    </li>
+      {/* Botón Eliminar original */}
+      <button
+        type="button"
+        onClick={() => onDelete(task.id)}
+        className="text-xs text-zinc-500 hover:text-red-400 px-2 py-1 transition-colors cursor-pointer bg-transparent border-none"
+      >
+        Eliminar
+      </button>
+    </div>
   );
-}
+};

@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { api } from "./api";
 
 export type FormState = { error?: string; ok?: boolean };
@@ -20,11 +20,41 @@ export async function createTask(_prev: FormState, formData: FormData): Promise<
 }
 
 export async function toggleTask(id: string, done: boolean) {
-  await api.updateTask(id, { done });
-  refresh();
+  try {
+    await api.updateTask(id, { done });
+    refresh();
+  } catch (error) {
+    console.error("Error al actualizar la tarea:", error);
+    throw error;
+  }
 }
 
+/**
+ * Nueva Server Action con manejo de errores controlado y revalidación de ruta.
+ */
+export async function deleteTaskAction(id: string) {
+  try {
+    // 1. Llamar a tu función de la API de NestJS
+    await api.deleteTask(id);
+
+    // 2. Revalidar la ruta principal para actualizar la vista sin recargar
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al eliminar la tarea:", error);
+    // No rompe la interfaz del cliente al capturar el error
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "No se pudo eliminar la tarea" 
+    };
+  }
+}
+
+/**
+ * Mantiene compatibilidad con componentes previos que llaman directamente a `deleteTask(id)`.
+ */
 export async function deleteTask(id: string) {
-  await api.deleteTask(id);
+  const result = await deleteTaskAction(id);
   refresh();
+  return result;
 }

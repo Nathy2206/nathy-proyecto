@@ -12,11 +12,10 @@ export default function HomePage() {
           Agrega, completa y elimina tareas. Se guardan en PostgreSQL a través de la API.
         </p>
       </div>
-      
+
       <TaskForm />
-      
-      {/* Pasamos un arreglo vacío inicial al Skeleton para cumplir con TypeScript */}
-      <Suspense fallback={<TaskListSkeleton initialTasks={[]} />}>
+
+      <Suspense fallback={<TaskListSkeleton />}>
         <TaskList />
       </Suspense>
     </section>
