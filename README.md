@@ -16,7 +16,7 @@ Eso construye las imágenes y levanta los tres servicios, esperando a que estén
 | -------- | -------------------------------- |
 | Web      | http://localhost:3000            |
 | API      | http://localhost:3001/api/tasks  |
-| Postgres | `postgres://app:app@localhost:5432/tasks` |
+| Postgres | `postgres://zigo:zigo2026@localhost:5432/tasks` |
 
 `make help` muestra todos los comandos (`up`, `down`, `logs`, `clean`, `db-shell`, `dev`, `test`, `lint`).
 

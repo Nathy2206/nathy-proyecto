@@ -35,7 +35,7 @@ clean: ## Detiene todo y BORRA el volumen de la base de datos
 	$(COMPOSE) down -v --rmi local
 
 db-shell: ## Abre psql dentro del contenedor de Postgres
-	$(COMPOSE) exec db psql -U $${POSTGRES_USER:-app} -d $${POSTGRES_DB:-tasks}
+	$(COMPOSE) exec db psql -U $${POSTGRES_USER:-zigo} -d $${POSTGRES_DB:-tasks}
 
 # ---------- Desarrollo local (hot reload) ----------
 install: ## Instala dependencias con pnpm
@@ -45,7 +45,7 @@ db: ## Levanta solo Postgres (para desarrollo local)
 	$(COMPOSE) up -d --wait db
 
 dev: install db ## Postgres en Docker + web y api en modo watch
-	DATABASE_URL=postgres://$${POSTGRES_USER:-app}:$${POSTGRES_PASSWORD:-app}@localhost:$${DB_PORT:-5432}/$${POSTGRES_DB:-tasks} \
+	DATABASE_URL=postgres://$${POSTGRES_USER:-zigo}:$${POSTGRES_PASSWORD:-zigo2026}@localhost:$${DB_PORT:-5432}/$${POSTGRES_DB:-tasks} \
 	API_URL=http://localhost:3001/api \
 	pnpm dev
 

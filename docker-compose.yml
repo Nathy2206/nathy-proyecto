@@ -5,8 +5,8 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-zigo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zigo2026}
       POSTGRES_DB: ${POSTGRES_DB:-tasks}
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3001
-      DATABASE_URL: postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@db:5432/${POSTGRES_DB:-tasks}
+      DATABASE_URL: postgres://${POSTGRES_USER:-zigo}:${POSTGRES_PASSWORD:-zigo2026}@db:5432/${POSTGRES_DB:-tasks}
       DB_SYNCHRONIZE: "true"
       CORS_ORIGIN: http://localhost:${WEB_PORT:-3000}
     ports:
