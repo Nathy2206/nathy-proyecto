@@ -1,7 +1,7 @@
-export type Task = {
+export interface Task {
   id: string;
   title: string;
   done: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}

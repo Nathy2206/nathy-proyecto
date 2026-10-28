@@ -8,15 +8,15 @@ export default function HomePage() {
     <section className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Mis tareas</h1>
-        <p className="text-sm text-muted mt-1">
+        <p className="text-sm text-muted-foreground">
           Agrega, completa y elimina tareas. Se guardan en PostgreSQL a través de la API.
         </p>
       </div>
-
+      
       <TaskForm />
-
-      {/* Lo estático se muestra al instante; la lista se transmite cuando llegan los datos */}
-      <Suspense fallback={<TaskListSkeleton />}>
+      
+      {/* Pasamos un arreglo vacío inicial al Skeleton para cumplir con TypeScript */}
+      <Suspense fallback={<TaskListSkeleton initialTasks={[]} />}>
         <TaskList />
       </Suspense>
     </section>

@@ -1,13 +1,12 @@
 import { connection } from "next/server";
 import { api } from "@/lib/api";
-import { TaskItem } from "./TaskItem";
+import { TaskListSkeleton } from "./TaskListSkeleton";
 import { TaskStats } from "./TaskStats";
 
 export async function TaskList() {
-  // Datos por request: no se pre-renderizan en el build
   await connection();
 
-  let tasks;
+  let tasks = [];
   try {
     tasks = await api.listTasks();
   } catch {
@@ -18,22 +17,11 @@ export async function TaskList() {
     );
   }
 
-  if (tasks.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted">
-        No hay tareas todavía. Agrega la primera arriba.
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <TaskStats tasks={tasks} />
-      <ul className="rounded-lg border border-border bg-surface divide-y divide-border">
-        {tasks.map((task) => (
-          <TaskItem key={task.id} task={task} />
-        ))}
-      </ul>
+      {/* Esto es lo que invoca tus dos columnas */}
+      <TaskListSkeleton initialTasks={tasks} /> 
     </div>
   );
 }
