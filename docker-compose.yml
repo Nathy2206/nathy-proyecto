@@ -1,15 +1,15 @@
 name: tasks-app
 
+# Configuración en apps/api/.env (api + db) y apps/web/.env (web).
+# Copia los .env.example si aún no existen.
+
 services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-zigo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zigo2026}
-      POSTGRES_DB: ${POSTGRES_DB:-tasks}
+    env_file: apps/api/.env
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,13 +23,13 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
+    env_file: apps/api/.env
     environment:
-      PORT: 3001
-      DATABASE_URL: postgres://${POSTGRES_USER:-zigo}:${POSTGRES_PASSWORD:-zigo2026}@db:5432/${POSTGRES_DB:-tasks}
-      DB_SYNCHRONIZE: "true"
-      CORS_ORIGIN: http://localhost:${WEB_PORT:-3000}
+      # Dentro de la red de compose la base de datos se llama `db`
+      DB_HOST: db
+      DB_PORT: 5432
     ports:
-      - "${API_PORT:-3001}:3001"
+      - "3001:3001"
     depends_on:
       db:
         condition: service_healthy
@@ -38,12 +38,12 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        # Se incrusta en el bundle: es la URL que usará el navegador
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
     restart: unless-stopped
-    environment:
-      # Server Components y Server Actions llaman a la API por la red interna
-      API_URL: http://api:3001/api
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - "3000:3000"
     depends_on:
       api:
         condition: service_healthy

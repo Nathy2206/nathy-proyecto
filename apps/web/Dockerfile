@@ -19,7 +19,10 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 
 # ---------- build: genera .next/standalone ----------
 FROM deps AS build
-ENV NEXT_TELEMETRY_DISABLED=1
+# URL de la API para el navegador; Next.js la incrusta en el bundle durante el build
+ARG NEXT_PUBLIC_API_URL=http://localhost:3001/api
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 COPY apps/web apps/web
 RUN pnpm --filter web build
 

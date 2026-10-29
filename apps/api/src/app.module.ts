@@ -6,15 +6,20 @@ import { TasksModule } from './tasks/tasks.module.js';
 
 @Module({
   imports: [
+    // Lee apps/api/.env; las variables del entorno (ej. docker-compose) tienen prioridad
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        url: config.getOrThrow<string>('DATABASE_URL'),
+        host: config.get('DB_HOST', 'localhost'),
+        port: Number(config.get('DB_PORT', 5432)),
+        username: config.getOrThrow<string>('POSTGRES_USER'),
+        password: config.getOrThrow<string>('POSTGRES_PASSWORD'),
+        database: config.getOrThrow<string>('POSTGRES_DB'),
         autoLoadEntities: true,
         // Práctico para desarrollo. En producción reemplazar por migraciones.
-        synchronize: config.get('DB_SYNCHRONIZE', 'true') === 'true',
+        synchronize: config.get('DB_SYNCHRONIZE', 'false') === 'true',
       }),
     }),
     HealthModule,

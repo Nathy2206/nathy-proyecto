@@ -5,3 +5,5 @@ export type Task = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type UpdateTaskInput = Partial<Pick<Task, "title" | "done">>;

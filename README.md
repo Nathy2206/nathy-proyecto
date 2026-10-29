@@ -20,7 +20,17 @@ Eso construye las imágenes y levanta los tres servicios, esperando a que estén
 
 `make help` muestra todos los comandos (`up`, `down`, `logs`, `clean`, `db-shell`, `dev`, `test`, `lint`).
 
-Para cambiar puertos o credenciales: `cp .env.example .env` y edita los valores.
+## Variables de entorno
+
+Cada app tiene su propio `.env` (no se versiona; `make env` los crea desde los `.env.example`):
+
+| Archivo         | Variables                                                                 |
+| --------------- | ------------------------------------------------------------------------- |
+| `apps/api/.env` | `PORT`, `CORS_ORIGIN`, `DB_HOST`, `DB_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DB_SYNCHRONIZE` |
+| `apps/web/.env` | `NEXT_PUBLIC_API_URL` (URL de la API que usa el navegador)                |
+
+- El contenedor `db` lee las credenciales `POSTGRES_*` del mismo `apps/api/.env`; en Docker, compose sobrescribe `DB_HOST=db`.
+- `NEXT_PUBLIC_API_URL` se incrusta en el bundle al compilar: si la cambias, vuelve a ejecutar `make build` (en Docker se pasa como build arg).
 
 ## Estructura
 
@@ -33,27 +43,30 @@ Para cambiar puertos o credenciales: `cp .env.example .env` y edita los valores.
 │   │   │   ├── app.module.ts # Config + TypeORM (Postgres)
 │   │   │   ├── health/       # GET /api/health (verifica la DB)
 │   │   │   └── tasks/        # módulo de dominio: entity, DTOs, service, controller, tests
+│   │   ├── .env.example
 │   │   └── Dockerfile
 │   └── web/                  # Next.js (App Router)
 │       ├── src/
 │       │   ├── app/          # layout.tsx, page.tsx, globals.css
-│       │   ├── components/   # Header, Footer, TaskForm, TaskList, TaskItem, TaskStats, ...
-│       │   └── lib/          # api.ts (cliente HTTP), actions.ts (Server Actions), types.ts
+│       │   ├── components/   # TaskBoard, TaskForm, TaskColumn, TaskItem, TaskStats, ...
+│       │   ├── hooks/        # useTasks (estado + llamadas a la API)
+│       │   └── lib/          # config.ts (lee .env), http/ (cliente axios + tasksApi), types.ts
+│       ├── .env.example
 │       └── Dockerfile
 ├── docker-compose.yml
 ├── Makefile
-├── pnpm-workspace.yaml
-└── .env.example
+└── pnpm-workspace.yaml
 ```
 
 ## Arquitectura
 
 ```
-Navegador ──► web (Next.js :3000) ──► api (NestJS :3001) ──► db (Postgres :5432)
+Navegador ──(HTML)──► web (Next.js :3000)
+    └─────(fetch)──────► api (NestJS :3001) ──► db (Postgres :5432)
 ```
 
-- El navegador **solo habla con Next.js**. La lista se renderiza en un Server Component y las mutaciones (crear, completar, borrar) son **Server Actions** que llaman a la API por la red interna de Docker (`API_URL=http://api:3001/api`). Así no hay URLs de la API "horneadas" en el bundle del cliente ni problemas de CORS.
-- La página usa **Partial Prerendering**: el encabezado y el formulario se sirven estáticos al instante y la lista se transmite dentro de un `<Suspense>`.
+- Next.js sirve la página; el navegador llama directamente a la API en `NEXT_PUBLIC_API_URL` con axios (`lib/http`). Por eso la API habilita CORS para `CORS_ORIGIN`.
+- `useTasks` carga la lista y aplica las mutaciones (crear, completar, borrar) de forma optimista, revirtiendo si la API falla.
 - La API expone un CRUD REST con validación (`class-validator`) y persiste con **TypeORM**.
 
 ### Endpoints
@@ -73,7 +86,7 @@ Navegador ──► web (Next.js :3000) ──► api (NestJS :3001) ──► d
 make dev
 ```
 
-Levanta solo Postgres en Docker y corre `web` y `api` en modo watch con pnpm. También puedes usar los scripts de la raíz: `pnpm dev:web`, `pnpm dev:api`.
+Levanta solo Postgres en Docker y corre `web` y `api` en modo watch con pnpm; cada app lee su propio `.env`. También puedes usar los scripts de la raíz: `pnpm dev:web`, `pnpm dev:api`.
 
 ## Docker
 
@@ -89,4 +102,4 @@ Ambos Dockerfiles son **multi-stage** y se construyen desde la raíz (el context
 
 - `DB_SYNCHRONIZE=true` crea las tablas automáticamente. Es cómodo para desarrollo, pero en producción hay que desactivarlo y usar **migraciones de TypeORM**.
 - Cambia las credenciales por defecto de Postgres (`.env`) y no expongas el puerto 5432 públicamente.
-- Las Server Actions son endpoints públicos: si agregas usuarios, valida autenticación dentro de cada acción.
+- La API es pública para el navegador: si agregas usuarios, protege los endpoints con autenticación.

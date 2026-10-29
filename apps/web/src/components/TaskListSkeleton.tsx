@@ -1,16 +1,13 @@
 export function TaskListSkeleton() {
   return (
-    <ul
-      aria-busy="true"
-      aria-label="Cargando tareas"
-      className="rounded-lg border border-border bg-surface divide-y divide-border"
-    >
-      {[1, 2, 3].map((i) => (
-        <li key={i} className="flex items-center gap-3 px-4 py-3">
-          <span className="size-5 rounded-full bg-border animate-pulse" />
-          <span className="h-4 flex-1 rounded bg-border animate-pulse" />
-        </li>
+    <div className="grid animate-pulse gap-6 md:grid-cols-2" aria-hidden>
+      {[0, 1].map((column) => (
+        <div key={column} className="rounded-xl border border-border bg-surface p-4">
+          <div className="mb-4 h-4 w-24 rounded bg-border" />
+          <div className="mb-2 h-10 rounded bg-border/60" />
+          <div className="h-10 rounded bg-border/60" />
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }

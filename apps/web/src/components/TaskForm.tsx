@@ -1,44 +1,58 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { createTask, type FormState } from "@/lib/actions";
+import { useState, type FormEvent } from "react";
 
-const initialState: FormState = {};
+const MAX_TITLE = 120;
 
-export function TaskForm() {
-  const [state, formAction, pending] = useActionState(createTask, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
+type Props = {
+  /** Devuelve un mensaje de error o null si se creó correctamente. */
+  onCreate: (title: string) => Promise<string | null>;
+};
 
-  // Limpia el input después de crear la tarea
-  useEffect(() => {
-    if (state.ok) formRef.current?.reset();
-  }, [state]);
+export function TaskForm({ onCreate }: Props) {
+  const [title, setTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = title.trim();
+    if (!value) return setError("Escribe un título para la tarea.");
+
+    setPending(true);
+    const result = await onCreate(value);
+    setPending(false);
+
+    setError(result);
+    if (!result) setTitle("");
+  }
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-2">
       <div className="flex gap-2">
         <label htmlFor="title" className="sr-only">
           Nueva tarea
         </label>
         <input
           id="title"
-          name="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="¿Qué hay que hacer?"
-          maxLength={120}
+          maxLength={MAX_TITLE}
           autoComplete="off"
           className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 outline-none focus:border-accent"
         />
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-accent text-accent-foreground px-4 py-2 font-medium disabled:opacity-60"
+          className="rounded-lg bg-accent px-4 py-2 font-medium text-accent-foreground disabled:opacity-60"
         >
           {pending ? "Agregando…" : "Agregar"}
         </button>
       </div>
-      {state.error && (
+      {error && (
         <p role="alert" className="text-sm text-danger">
-          {state.error}
+          {error}
         </p>
       )}
     </form>
