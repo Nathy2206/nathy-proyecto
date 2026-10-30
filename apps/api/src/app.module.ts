@@ -6,22 +6,24 @@ import { TasksModule } from './tasks/tasks.module.js';
 
 @Module({
   imports: [
-    // Lee apps/api/.env; las variables del entorno (ej. docker-compose) tienen prioridad
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST', 'localhost'),
-        port: Number(config.get('DB_PORT', 5432)),
-        username: config.getOrThrow<string>('POSTGRES_USER'),
-        password: config.getOrThrow<string>('POSTGRES_PASSWORD'),
-        database: config.getOrThrow<string>('POSTGRES_DB'),
-        autoLoadEntities: true,
-        // Práctico para desarrollo. En producción reemplazar por migraciones.
-        synchronize: config.get('DB_SYNCHRONIZE', 'false') === 'true',
-      }),
+    // Busca primero en apps/api/.env y, si no lo encuentra, en el .env de la raíz del monorepo
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
+    TypeOrmModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    type: 'postgres',
+    host: config.get<string>('DB_HOST') || 'localhost',
+    port: Number(config.get('DB_PORT') || 5432),
+    username: config.get<string>('POSTGRES_USER') || 'zigo',
+    password: config.get<string>('POSTGRES_PASSWORD') || 'zigo2026',
+    database: config.get<string>('POSTGRES_DB') || 'tasks',
+    autoLoadEntities: true,
+    synchronize: true, // <-- Fuerza la creación automática de las tablas
+  }),
+}),
     HealthModule,
     TasksModule,
   ],

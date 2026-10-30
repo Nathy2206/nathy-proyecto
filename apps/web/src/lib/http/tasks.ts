@@ -2,9 +2,22 @@ import type { Task, UpdateTaskInput } from "@/lib/types";
 import { apiClient } from "./client";
 
 export const tasksApi = {
-  list: () => apiClient.get<Task[]>("/tasks").then((res) => res.data),
-  create: (title: string) => apiClient.post<Task>("/tasks", { title }).then((res) => res.data),
-  update: (id: string, data: UpdateTaskInput) =>
-    apiClient.patch<Task>(`/tasks/${id}`, data).then((res) => res.data),
-  remove: (id: string) => apiClient.delete<void>(`/tasks/${id}`).then(() => undefined),
+  list: async (): Promise<Task[]> => {
+    const res = await apiClient.get("/tasks");
+    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res.data?.data)) return res.data.data;
+    if (Array.isArray(res.data?.tasks)) return res.data.tasks;
+    return [];
+  },
+  create: async (title: string): Promise<Task> => {
+    const res = await apiClient.post("/tasks", { title });
+    return res.data?.data || res.data;
+  },
+  update: async (id: string, data: UpdateTaskInput): Promise<Task> => {
+    const res = await apiClient.patch(`/tasks/${id}`, data);
+    return res.data?.data || res.data;
+  },
+  remove: async (id: string): Promise<void> => {
+    await apiClient.delete(`/tasks/${id}`);
+  },
 };

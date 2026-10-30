@@ -33,6 +33,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      # Verifica el endpoint de salud de la API (HealthModule)
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   web:
     build:

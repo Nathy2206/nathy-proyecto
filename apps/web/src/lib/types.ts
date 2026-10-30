@@ -1,9 +1,14 @@
-export type Task = {
+export interface Task {
   id: string;
   title: string;
-  done: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+  completed?: boolean;
+  done?: boolean; // o el que use tu backend
+  createdAt?: string;
+  updatedAt?: string;
+}
 
-export type UpdateTaskInput = Partial<Pick<Task, "title" | "done">>;
+export interface UpdateTaskInput {
+  title?: string;
+  completed?: boolean;
+  done?: boolean;
+}
