@@ -1,6 +1,7 @@
 "use client";
 
 import { useTasks } from "@/hooks/useTasks";
+import type { Task } from "@/lib/types";
 import { TaskColumn } from "./TaskColumn";
 import { TaskForm } from "./TaskForm";
 import { TaskListSkeleton } from "./TaskListSkeleton";
@@ -12,9 +13,31 @@ export function TaskBoard() {
   const pending = tasks.filter((t) => !t.done);
   const completed = tasks.filter((t) => t.done);
 
+  const handleCreateTask = async (title: string): Promise<string | null> => {
+    try {
+      await createTask(title);
+      return null;
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response
+          ?.data?.message ||
+        (err as Error)?.message ||
+        "No se pudo crear la tarea";
+      return message;
+    }
+  };
+
+  const handleToggle = (task: Task) => {
+    toggleTask(task.id);
+  };
+
+  const handleDelete = (task: Task) => {
+    deleteTask(task.id);
+  };
+
   return (
     <div className="space-y-6">
-      <TaskForm onCreate={createTask} />
+      <TaskForm onCreate={handleCreateTask} />
 
       {error && (
         <p role="alert" className="rounded-lg border border-danger/40 bg-surface px-4 py-3 text-sm text-danger">
@@ -32,15 +55,15 @@ export function TaskBoard() {
               title="Pendientes"
               emptyText="No hay tareas pendientes."
               tasks={pending}
-              onToggle={toggleTask}
-              onDelete={deleteTask}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
             />
             <TaskColumn
               title="Realizadas"
               emptyText="No hay tareas completadas."
               tasks={completed}
-              onToggle={toggleTask}
-              onDelete={deleteTask}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
             />
           </div>
         </div>

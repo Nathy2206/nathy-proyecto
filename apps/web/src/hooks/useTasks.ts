@@ -1,62 +1,113 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { tasksApi } from "@/lib/http/tasks";
-import type { Task } from "@/lib/types";
+import type { Task, UpdateTaskInput } from "@/lib/types";
 
-const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
-
-/** Estado de las tareas sincronizado con la API, con actualizaciones optimistas. */
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizeTask = (t: Record<string, unknown>): Task => ({
+    ...(t as unknown as Task),
+    done: t.done !== undefined ? Boolean(t.done) : Boolean(t.completed),
+    completed: t.completed !== undefined ? Boolean(t.completed) : Boolean(t.done),
+  });
+
+  const loadTasks = useCallback(async () => {
+    try {
+      setError(null);
+      const data = await tasksApi.list();
+      setTasks(data.map((item) => normalizeTask(item as unknown as Record<string, unknown>)));
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response
+          ?.data?.message ||
+        (err as Error)?.message ||
+        "Error al cargar tareas";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    let cancelled = false;
-    tasksApi
-      .list()
-      .then((data) => !cancelled && setTasks(data))
-      .catch((e) => !cancelled && setError(errorMessage(e, "No se pudieron cargar las tareas.")))
-      .finally(() => !cancelled && setLoading(false));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    loadTasks();
+  }, [loadTasks]);
 
-  /** Devuelve el mensaje de error si falla, para que el formulario lo muestre. */
-  const createTask = useCallback(async (title: string): Promise<string | null> => {
+  const createTask = async (title: string) => {
     try {
-      const task = await tasksApi.create(title);
+      const created = await tasksApi.create(title);
+      const task = normalizeTask(created as unknown as Record<string, unknown>);
       setTasks((prev) => [task, ...prev]);
-      return null;
-    } catch (e) {
-      return errorMessage(e, "No se pudo crear la tarea.");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response
+          ?.data?.message ||
+        (err as Error)?.message ||
+        "Error al crear tarea";
+      setError(message);
+      throw err;
     }
-  }, []);
+  };
 
-  const toggleTask = useCallback(async (task: Task) => {
-    const done = !task.done;
-    setError(null);
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, done } : t)));
+  const toggleTask = async (id: string) => {
+    const target = tasks.find((t) => t.id === id);
+    if (!target) return;
+
+    const nextState = !(target.done ?? target.completed);
+
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, done: nextState, completed: nextState } : t
+      )
+    );
+
     try {
-      await tasksApi.update(task.id, { done });
-    } catch (e) {
-      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, done: task.done } : t)));
-      setError(errorMessage(e, "No se pudo actualizar la tarea."));
+      await tasksApi.update(id, {
+        done: nextState,
+        completed: nextState,
+      } as UpdateTaskInput);
+    } catch (err: unknown) {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, done: !nextState, completed: !nextState } : t
+        )
+      );
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response
+          ?.data?.message ||
+        (err as Error)?.message ||
+        "Error al actualizar estado";
+      setError(message);
     }
-  }, []);
+  };
 
-  const deleteTask = useCallback(async (task: Task) => {
-    setError(null);
-    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+  const deleteTask = async (id: string) => {
+    const prevTasks = [...tasks];
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+
     try {
-      await tasksApi.remove(task.id);
-    } catch (e) {
-      setTasks((prev) => [task, ...prev]);
-      setError(errorMessage(e, "No se pudo eliminar la tarea."));
+      await tasksApi.remove(id);
+    } catch (err: unknown) {
+      setTasks(prevTasks);
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response
+          ?.data?.message ||
+        (err as Error)?.message ||
+        "Error al eliminar tarea";
+      setError(message);
     }
-  }, []);
+  };
 
-  return { tasks, loading, error, createTask, toggleTask, deleteTask };
+  return {
+    tasks,
+    loading,
+    error,
+    createTask,
+    toggleTask,
+    deleteTask,
+    refetch: loadTasks,
+  };
 }
